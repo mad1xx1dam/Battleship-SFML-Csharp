@@ -10,7 +10,6 @@ namespace Battleship
         //для отслеживания пока что пустых позиций
         public List<Vector2i[]> shipPositions = new List<Vector2i[]>();
         //для отслеживания пока что пустых позиций
-        private List<Vector2i> allowedPositions = new List<Vector2i>();
         private static Font font = new Font("Fonts/TNR.ttf");
         //список букв для отрисовки в клетках
         static string[] letters = new string[] { "А", "Б", "В", "Г", "Д", "Е", "Ж", "З", "И", "К" };
@@ -32,7 +31,6 @@ namespace Battleship
                 for (int j = 0; j < 10; j++)
                 {
                     playGround[i, j] = new Cell(x + j * length, y + i * length, length, CellType.Water);
-                    allowedPositions.Add(new Vector2i(i, j));
                 }
             }
 
@@ -67,10 +65,7 @@ namespace Battleship
             foreach (int size in shipSizes)
             {
                 shipPositions.Add(GenerateCoordinates(size));
-            }
-            foreach (Vector2i[] positionArray in shipPositions)
-                foreach (Vector2i position in positionArray)
-                    playGround[position.X, position.Y].ChangeType(CellType.Ship);
+            }           
         }
 
         private Vector2i[] GenerateCoordinates(int count)
@@ -91,9 +86,9 @@ namespace Battleship
                     {
                         for (int i = 0; i < count; i++)
                         {
+                            playGround[x + i, y].ChangeType(CellType.Ship);
                             Vector2i toAdd = new Vector2i(x + i, y);
                             newCoordinates[i] = toAdd;
-                            allowedPositions.Remove(toAdd);
                         }
                         coordinatesGenerated = true;
                     }
