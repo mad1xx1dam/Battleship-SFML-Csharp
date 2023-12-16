@@ -2,6 +2,7 @@
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
+using System.Net.Http.Headers;
 
 class Game
 {
@@ -75,10 +76,12 @@ class Game
         //кнопка возврата в меню
         returnMenu = TextSpriteCreator.SpriteCreate(returnMenuTexture, window.Size.X - returnMenuTexture.Size.X / 2, window.Size.Y - returnMenuTexture.Size.Y / 2);
         //"игроки"
-        player = new Player(window.Size.X / 6, window.Size.Y / 3, 30, "Игрок");
-        bot = new Player(window.Size.X / 1.5f, window.Size.Y / 3, 30, "Компьютер");
+        int cellLength = 40;
+        Vector2f playerPosition = new Vector2f(window.Size.X / 6, window.Size.Y / 3.5f);
+        player = new Player(playerPosition.X, playerPosition.Y, cellLength, "Игрок");
+        bot = new Player(playerPosition.X * 3.8f, playerPosition.Y, cellLength, "Компьютер");
         //кнопка генерации рандомной растановки кораблей
-        randomShips = TextSpriteCreator.SpriteCreate(randomShipsTexture, window.Size.X / 5, window.Size.Y / 5);
+        randomShips = TextSpriteCreator.SpriteCreate(randomShipsTexture, playerPosition.X + cellLength * 4.5f, playerPosition.Y - cellLength * 3.5f);
         //для отслеживания позиций тех кнопок, которые никак не будут перемещаться
         buttonBounds = new List<FloatRect>();
         menuSprites = new Sprite[]  { start, settings, exit };
@@ -231,6 +234,7 @@ class Game
         }
         else if (button == randomShips.GetGlobalBounds())
         {
+            gameSprites.Remove(randomShips);
             player.ResetPlayGround();
             player.GenerateShips();
         }
