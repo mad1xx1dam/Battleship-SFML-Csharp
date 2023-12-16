@@ -1,7 +1,5 @@
-﻿using Battleship;
-using SFML.Graphics;
+﻿using SFML.Graphics;
 using SFML.System;
-using System;
 
 namespace Battleship
 {

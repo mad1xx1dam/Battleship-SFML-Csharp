@@ -18,6 +18,9 @@
     <None Update="Images\background.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Images\changeDirection.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Images\easy.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
