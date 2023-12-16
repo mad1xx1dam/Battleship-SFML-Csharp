@@ -13,7 +13,7 @@ class Game
     //списки кнопок/спрайтов
     Sprite[] menuSprites;
     Sprite[] settingsSprites;
-    Sprite[] gameSprites;
+    List<Sprite> gameSprites;
 
     Vector2i mousePos;
 
@@ -26,6 +26,7 @@ class Game
     Texture hardTexture = new Texture("Images/hard.png");
     Texture okTexture = new Texture("Images/ok.png");
     Texture returnMenuTexture = new Texture("Images/returnMenu.png");
+    Texture randomShipsTexture = new Texture("Images/randomShips.png");
 
     private Text textMain;
     private Text textAdvice;
@@ -39,6 +40,7 @@ class Game
     Sprite hard;
     Sprite ok;
     Sprite returnMenu;
+    Sprite randomShips;
 
     Player player;
     Player bot;
@@ -75,12 +77,13 @@ class Game
         //"игроки"
         player = new Player(window.Size.X / 6, window.Size.Y / 3, 30, "Игрок");
         bot = new Player(window.Size.X / 1.5f, window.Size.Y / 3, 30, "Компьютер");
+        //кнопка генерации рандомной растановки кораблей
+        randomShips = TextSpriteCreator.SpriteCreate(randomShipsTexture, window.Size.X / 5, window.Size.Y / 5);
         //для отслеживания позиций тех кнопок, которые никак не будут перемещаться
-
         buttonBounds = new List<FloatRect>();
         menuSprites = new Sprite[]  { start, settings, exit };
         settingsSprites = new Sprite[] { easy, hard, ok, returnMenu };
-        gameSprites = new Sprite[] { returnMenu };
+        gameSprites = new List<Sprite> { returnMenu, randomShips };
 
         foreach (Sprite sprite in menuSprites)
             buttonBounds.Add(sprite.GetGlobalBounds());
@@ -106,6 +109,8 @@ class Game
     }
     public void GameDraw()
     {
+      
+
         foreach (Sprite sprite in gameSprites)
             window.Draw(sprite);
 
@@ -150,9 +155,7 @@ class Game
             }
             window.Display();
         }
-    }
-
-    
+    } 
     //переменная добавлена, так как при нажатии лкм, обработчик успевает сработать несколько раз,
     //а этого нам точно не надо, так в таком случае, например, успевают отрисоваться другие вариации полей
     bool isMouseClicked = false;
@@ -184,13 +187,14 @@ class Game
     {
         if (button == start.GetGlobalBounds())
         {
-            player.GenerateShips();
+            bot.GenerateShips();
             foreach (Vector2i[] vector in player.shipPositions)
             {
                 foreach (Vector2i vector2 in vector) Console.Write(vector2);
                 Console.WriteLine();
             }
             gameState = GameState.Game;
+            buttonBounds.Clear();
             foreach (Sprite sprite in gameSprites)
                 buttonBounds.Add(sprite.GetGlobalBounds());
         }
@@ -217,11 +221,18 @@ class Game
         }
         else if (button == returnMenu.GetGlobalBounds())
         {
+            //очистка игровых полей игрока и компьютера
+            bot.ResetPlayGround();
             player.ResetPlayGround();
             gameState = GameState.Menu;
             buttonBounds.Clear();
             foreach (Sprite sprite in menuSprites)
                 buttonBounds.Add(sprite.GetGlobalBounds());
+        }
+        else if (button == randomShips.GetGlobalBounds())
+        {
+            player.ResetPlayGround();
+            player.GenerateShips();
         }
     }
 }

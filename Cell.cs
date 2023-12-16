@@ -18,20 +18,23 @@ namespace Battleship
             cellSprite.Scale = new Vector2f(length / cellSprite.Texture.Size.X, length / cellSprite.Texture.Size.Y);
         }
 
-        public void ChangeType(CellType newCellType)
+        public void ChangeType(CellType newCellType, bool changeTexture = true)
         {
             CellType = newCellType; // Установка нового типа клетки
-            switch (newCellType)
+            if (changeTexture)
             {
-                case CellType.Water:
-                    cellSprite.Texture = new Texture("Images/water.jpg");
-                    break;
-                case CellType.DigitOrLetter:
-                    cellSprite.Texture = new Texture("Images/letter.jpg");
-                    break;
-                case CellType.Ship:
-                    cellSprite.Texture = new Texture("Images/ship.jpg"); // Примерный путь к изображению корабля
-                    break;
+                switch (newCellType)
+                {
+                    case CellType.Water:
+                        cellSprite.Texture = new Texture("Images/water.jpg");
+                        break;
+                    case CellType.DigitOrLetter:
+                        cellSprite.Texture = new Texture("Images/letter.jpg");
+                        break;
+                    case CellType.Ship:
+                        cellSprite.Texture = new Texture("Images/ship.jpg"); // Примерный путь к изображению корабля
+                        break;
+                }
             }
         }
 

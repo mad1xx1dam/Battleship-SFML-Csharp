@@ -11,6 +11,8 @@ namespace Battleship
         //список букв для отрисовки в клетках
         static string[] letters = new string[] { "А", "Б", "В", "Г", "Д", "Е", "Ж", "З", "И", "К" };
         Random random = new Random();
+        //имя
+        public string Name { get; set; }
         //для отслеживания пока что пустых позиций
         public List<Vector2i[]> shipPositions = new List<Vector2i[]>();
         //для отслеживания пока что пустых позиций
@@ -26,6 +28,8 @@ namespace Battleship
 
         public Player(float x, float y, float length, string name)
         {
+            Name = name;
+
             // Создание игрового поля
             for (int i = 0; i < 10; i++)
             {
@@ -99,11 +103,13 @@ namespace Battleship
 
                 if (IsPositionAndDirectionAvailable(new Vector2i(y, x), direction, count))
                 {
-                    if (direction == 0) // Вертикальная ориентация
+                    Vector2i currentCell;
+                    if (direction == Direction.Vertical) // Вертикальная ориентация
                     {
                         for (int i = 0; i < count; i++)
                         {
-                            playGround[y + i, x].ChangeType(CellType.Ship);
+                            currentCell = new Vector2i(y + i, x);
+                            playGround[currentCell.X, currentCell.Y].ChangeType((Name == "Компьютер") ? CellType.Ship : CellType.Ship, (Name == "Компьютер") ? false : true);
                             Vector2i toAdd = new Vector2i(y + i, x);
                             newCoordinates[i] = toAdd;
                         }   
@@ -112,12 +118,12 @@ namespace Battleship
                     {
                         for (int i = 0; i < count; i++)
                         {
-                            playGround[y, x + i].ChangeType(CellType.Ship);
+                            currentCell = new Vector2i(y, x + i);
+                            playGround[currentCell.X, currentCell.Y].ChangeType((Name == "Компьютер") ? CellType.Ship : CellType.Ship, (Name == "Компьютер") ? false : true);
                             Vector2i toAdd = new Vector2i(y, x + i);
                             newCoordinates[i] = toAdd;
                         }
                     }
-                    
                     coordinatesGenerated = true;
                 }
             }
@@ -176,5 +182,3 @@ namespace Battleship
         }
     }
 }
-
-
