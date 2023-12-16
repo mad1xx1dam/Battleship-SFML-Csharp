@@ -6,13 +6,13 @@ namespace Battleship
 {
     internal class Player
     {
+        private static Font font = new Font("Fonts/TNR.ttf");
+        //список букв для отрисовки в клетках
+        static string[] letters = new string[] { "А", "Б", "В", "Г", "Д", "Е", "Ж", "З", "И", "К" };
         Random random = new Random();
         //для отслеживания пока что пустых позиций
         public List<Vector2i[]> shipPositions = new List<Vector2i[]>();
         //для отслеживания пока что пустых позиций
-        private static Font font = new Font("Fonts/TNR.ttf");
-        //список букв для отрисовки в клетках
-        static string[] letters = new string[] { "А", "Б", "В", "Г", "Д", "Е", "Ж", "З", "И", "К" };
         //дополнительные ряды сверху/слева для информации о "координатах"
         Cell[] upLine = new Cell[10];
         Text[] upLineText = new Text[10];
@@ -44,7 +44,7 @@ namespace Battleship
                 leftLine[k] = new Cell(x - length, y + k * length, length, CellType.DigitOrLetter);
                 leftLineText[k] = TextSpriteCreator.TextCreate((k + 1).ToString(), font, (uint)(length / 2), Text.Styles.Bold, x - length, y + k * length);
             }
-            this.name = TextSpriteCreator.TextCreate(name, font, 20, Text.Styles.Italic, playGround[0, 4].Position.X, y - length * 2);
+            this.name = TextSpriteCreator.TextCreate(name, font, 20, Text.Styles.Italic, (playGround[0, 9].Position.X - playGround[0, 0].Position.X) / 2, y - length * 2);
         }
 
         public void Draw(RenderWindow window)
@@ -102,12 +102,25 @@ namespace Battleship
         {
             for (int i = 0; i < count; i++)
             {
+                //проверка на то, есть ли в данных клетках уже корабль
                 if (playGround[position.X + i, position.Y].CellType == CellType.Ship)
                 {
                     return false; // позиция занята
                 }
             }
             return true; // позиция доступна
+        }
+
+        public void ResetPlayGround ()
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                for (int j = 0; j < 10; j++)
+                {
+                    playGround[i, j].ChangeType(CellType.Water); 
+                }
+            }
+            shipPositions.Clear();
         }
     }
 }

@@ -103,8 +103,6 @@ class Game
     {
         foreach (Sprite sprite in menuSprites)
             window.Draw(sprite);
-
-        HandleMouseInput();
     }
     public void GameDraw()
     {
@@ -113,8 +111,6 @@ class Game
 
         player.Draw(window);
         bot.Draw(window);
-        
-        HandleMouseInput();
     }
     public void SettingsDraw()
     {
@@ -123,8 +119,6 @@ class Game
 
         foreach (Sprite sprite in settingsSprites)
             window.Draw(sprite);
-
-        HandleMouseInput();
     }
 
     public void Run()
@@ -138,7 +132,7 @@ class Game
             if (Keyboard.IsKeyPressed(Keyboard.Key.Escape))
                 window.Close();
             mousePos = Mouse.GetPosition(window);
-
+            HandleMouseInput();
             switch (gameState)
             {
                 case GameState.Start:
@@ -223,6 +217,7 @@ class Game
         }
         else if (button == returnMenu.GetGlobalBounds())
         {
+            player.ResetPlayGround();
             gameState = GameState.Menu;
             buttonBounds.Clear();
             foreach (Sprite sprite in menuSprites)
