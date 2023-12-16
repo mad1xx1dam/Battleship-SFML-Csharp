@@ -1,4 +1,5 @@
-﻿using SFML.Graphics;
+﻿using Battleship;
+using SFML.Graphics;
 using SFML.System;
 using System;
 
@@ -44,7 +45,7 @@ namespace Battleship
                 leftLine[k] = new Cell(x - length, y + k * length, length, CellType.DigitOrLetter);
                 leftLineText[k] = TextSpriteCreator.TextCreate((k + 1).ToString(), font, (uint)(length / 2), Text.Styles.Bold, x - length, y + k * length);
             }
-            this.name = TextSpriteCreator.TextCreate(name, font, 20, Text.Styles.Italic, (playGround[0, 9].Position.X - playGround[0, 0].Position.X) / 2, y - length * 2);
+            this.name = TextSpriteCreator.TextCreate(name, font, 20, Text.Styles.Italic, (playGround[0, 9].Position.X + playGround[0, 0].Position.X) / 2, y - length * 2);
         }
 
         public void Draw(RenderWindow window)
@@ -72,41 +73,92 @@ namespace Battleship
         {
             Vector2i[] newCoordinates = new Vector2i[count];
 
+            int y = 0;
+            int x = 0;
+            Direction direction;
+
             bool coordinatesGenerated = false;
 
             while (!coordinatesGenerated)
             {
-                int x = random.Next(0, 10);
-                int y = random.Next(0, 10);
-
-                if (x + count <= 10)
+                direction = (Direction)random.Next(0, 2);
+                
+                switch (direction)
                 {
-                    Vector2i startingPosition = new Vector2i(x, y);
-                    if (IsPositionAvailable(startingPosition, count))
+                    //не имеет смысла рассматривать y, начиная от 10 - count + 1 до конца, так как корабль просто не вместится
+                    case Direction.Vertical:
+                        y = random.Next(0, 10 - count + 1);
+                        x = random.Next(0, 10);
+                        break;
+                    //не имеет смысла рассматривать x, начиная от 10 - count + 1 до конца, так как корабль просто не вместится
+                    case Direction.Horizontal:
+                        y = random.Next(0, 10);
+                        x = random.Next(0, 10 - count + 1);
+                        break;
+                }
+
+                if (IsPositionAndDirectionAvailable(new Vector2i(y, x), direction, count))
+                {
+                    if (direction == 0) // Вертикальная ориентация
                     {
                         for (int i = 0; i < count; i++)
                         {
-                            playGround[x + i, y].ChangeType(CellType.Ship);
-                            Vector2i toAdd = new Vector2i(x + i, y);
+                            playGround[y + i, x].ChangeType(CellType.Ship);
+                            Vector2i toAdd = new Vector2i(y + i, x);
+                            newCoordinates[i] = toAdd;
+                        }   
+                    }
+                    else // Горизонтальная ориентация
+                    {
+                        for (int i = 0; i < count; i++)
+                        {
+                            playGround[y, x + i].ChangeType(CellType.Ship);
+                            Vector2i toAdd = new Vector2i(y, x + i);
                             newCoordinates[i] = toAdd;
                         }
-                        coordinatesGenerated = true;
                     }
+                    
+                    coordinatesGenerated = true;
                 }
             }
-
             return newCoordinates;
         }
 
-        private bool IsPositionAvailable(Vector2i position, int count)
+        private bool IsPositionAndDirectionAvailable(Vector2i position, Direction direction, int count)
         {
-            for (int i = 0; i < count; i++)
+            int y = position.X;
+            int x = position.Y;
+
+            //если направление вертикальное 
+            if (direction == Direction.Vertical)
             {
-                //проверка на то, есть ли в данных клетках уже корабль
-                if (playGround[position.X + i, position.Y].CellType == CellType.Ship)
-                {
-                    return false; // позиция занята
-                }
+                if (y + count > 10) return false; //просто не вместится в вертикаль
+                int[] xToCheck = new int[3] { x - 1, x, x + 1 };
+                
+                int yPrevious = y - 1 >= 0 ? y - 1 : 0;      //предыдущая точка до корабаля
+                int yNext = y + count <= 9 ? y + count : 9;  //следующая за кораблем точка
+
+                foreach (int xCheck in xToCheck)
+                    if (xCheck >= 0 && xCheck <= 9)
+                        for (int i = yPrevious; i <= yNext; i++)
+                        {
+                            if (playGround[i, xCheck].CellType == CellType.Ship) return false;
+                        }
+            }
+            else //горизонталь
+            {
+                if (x + count > 10) return false; //просто не вместится в горизонталь
+                int[] yToCheck = new int[3] { y - 1, y, y + 1 };
+                
+                int xPrevious = x - 1 >= 0 ? x - 1 : 0;      //предыдущая точка до корабаля
+                int xNext = x + count <= 9 ? x + count : 9;  //следующая за кораблем точка
+
+                foreach (int yCheck in yToCheck)
+                    if (yCheck >= 0 && yCheck <= 9)
+                        for (int i = xPrevious; i <= xNext; i++)
+                        {
+                            if (playGround[yCheck, i].CellType == CellType.Ship) return false;
+                        }
             }
             return true; // позиция доступна
         }
