@@ -3,6 +3,7 @@ using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
 using System.Net.Http.Headers;
+using static SFML.Window.Mouse;
 
 class Game
 {
@@ -11,6 +12,8 @@ class Game
 
     //список для хранения границ отрисованных кнопок
     List<FloatRect> buttonBounds;
+    //список для хранения границ отрисованных клеток игрока
+    FloatRect[,] playerCellBounds = new FloatRect[10, 10];
     //списки кнопок/спрайтов
     Sprite[] menuSprites;
     Sprite[] settingsSprites;
@@ -88,8 +91,42 @@ class Game
         settingsSprites = new Sprite[] { easy, hard, ok, returnMenu };
         gameSprites = new List<Sprite> { returnMenu, randomShips };
 
+        for (int y = 0; y < 10; y++)
+            for (int x = 0; x < 10; x++)
+                playerCellBounds[y, x] = player.PlayGround[y, x].CellSprite.GetGlobalBounds();
         foreach (Sprite sprite in menuSprites)
             buttonBounds.Add(sprite.GetGlobalBounds());
+    }
+    public void Run()
+    {
+        while (window.IsOpen)
+        {
+            window.Clear();
+            window.Draw(background);
+            window.DispatchEvents();
+
+            if (Keyboard.IsKeyPressed(Keyboard.Key.Escape))
+                window.Close();
+            mousePos = Mouse.GetPosition(window);
+            HandleMouseInput();
+            
+            switch (gameState)
+            {
+                case GameState.Start:
+                    StartDraw();
+                    break;
+                case GameState.Menu:
+                    MenuDraw();
+                    break;
+                case GameState.Game:
+                    GameDraw();
+                    break;
+                case GameState.Settings:
+                    SettingsDraw();
+                    break;
+            }
+            window.Display();
+        }
     }
 
     public void StartDraw()
@@ -110,15 +147,14 @@ class Game
         foreach (Sprite sprite in menuSprites)
             window.Draw(sprite);
     }
+    
     public void GameDraw()
     {
-      
-
         foreach (Sprite sprite in gameSprites)
             window.Draw(sprite);
-
         player.Draw(window);
         bot.Draw(window);
+        ShipsSettingMouseHandler();
     }
     public void SettingsDraw()
     {
@@ -129,36 +165,116 @@ class Game
             window.Draw(sprite);
     }
 
-    public void Run()
-    {
-        while (window.IsOpen)
-        {
-            window.Clear();
-            window.Draw(background);
-            window.DispatchEvents();
+    private int prevX = 0; // переменная для хранения предыдущей координаты x
+    private int prevY = 0; // переменная для хранения предыдущей координаты y
+    private Direction direction = Direction.Vertical;
 
-            if (Keyboard.IsKeyPressed(Keyboard.Key.Escape))
-                window.Close();
-            mousePos = Mouse.GetPosition(window);
-            HandleMouseInput();
-            switch (gameState)
-            {
-                case GameState.Start:
-                    StartDraw();
-                    break;
-                case GameState.Menu:
-                    MenuDraw();
-                    break;
-                case GameState.Game:
-                    GameDraw();
-                    break;
-                case GameState.Settings:
-                    SettingsDraw();
-                    break;
-            }
-            window.Display();
+    
+    //private void DirectionChange()
+    //{
+    //    if (Keyboard.IsKeyPressed(Keyboard.Key.Space))
+    //    {
+    //        if (!isMouseClicked) // проверка наличия предыдущего нажатия
+    //        {
+    //            isMouseClicked = true; // установка флага нажатия
+    //            if (direction == Direction.Horizontal)
+    //                direction = Direction.Vertical;
+    //            else
+    //                direction = Direction.Horizontal;
+    //        }
+    //    }
+    //    else
+    //    {
+    //        isMouseClicked = false; // сброс флага нажатия
+    //    } 
+    //}
+
+    public void ShipsSettingMouseHandler()
+    {
+        //DirectionChange();
+        bool shouldBreak = false;
+        if (prevX != -1 && prevY != -1) // проверяем, была ли уже выбрана предыдущая клетка
+        {
+            ResetCellColor(prevY, prevX); // сбрасываем цвет предыдущей клетки
         }
-    } 
+        for (int y = 0; y < 10; y++)
+        {
+            for (int x = 0; x < 10; x++)
+            {
+                if (playerCellBounds[y, x].Contains(mousePos.X, mousePos.Y))
+                {                  
+                    if (player.IsPositionAndDirectionAvailable(new Vector2i(y, x), direction, 3))
+                    {
+                        if (direction == Direction.Horizontal)
+                        {
+                            for (int i = 0; i < 3; i++)
+                                player.PlayGround[y, x + i].CellSprite.Color = Color.Green;
+                            if (Mouse.IsButtonPressed(Mouse.Button.Left))
+                            {
+                                Vector2i[] newCoordinates = new Vector2i[3];
+                                for (int i = 0; i < 3; i++)
+                                    newCoordinates[i] = new Vector2i(y, x + i);
+                                player.AddShip(newCoordinates);
+                            }
+                        }
+                        else
+                        {
+                            for (int i = 0; i < 3; i++)
+                                player.PlayGround[y + i, x].CellSprite.Color = Color.Green;
+                            if (Mouse.IsButtonPressed(Mouse.Button.Left))
+                            {
+                                Vector2i[] newCoordinates = new Vector2i[3];
+                                for (int i = 0; i < 3; i++)
+                                    newCoordinates[i] = new Vector2i(y + i, x);
+                                player.AddShip(newCoordinates);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (direction == Direction.Horizontal) // Окрашиваем клетки в случае недоступности для горизонтального положения
+                        {
+                            for (int i = 0; i < 3; i++)
+                                if (x + i <= 9)
+                                    player.PlayGround[y, x + i].CellSprite.Color = Color.Red;
+                        }
+                        else // Окрашиваем клетки в случае недоступности для вертикального положения
+                        {
+                            for (int i = 0; i < 3; i++)
+                                if (y + i <= 9)
+                                    player.PlayGround[y + i, x].CellSprite.Color = Color.Red;
+                        }
+                    }
+                    // обновляем предыдущие координаты
+                    prevX = x;
+                    prevY = y;
+                    shouldBreak = true;
+                    break; 
+                }
+                else if (prevX != -1 && prevY != -1)
+                {
+                    ResetCellColor(y, x);
+                }
+            }
+            if (shouldBreak) break;
+        }
+    }
+
+    public void ResetCellColor(int y, int x)
+    {
+        if (direction == Direction.Horizontal)
+            for (int i = 0; i < 3; i++)
+            {
+                if (x + i <= 9)
+                    player.PlayGround[y, x + i].CellSprite.Color = new Color(255, 255, 255, 255);
+            }
+        else
+            for (int i = 0; i < 3; i++)
+            {
+                if (y + i <= 9)
+                    player.PlayGround[y + i, x].CellSprite.Color = new Color(255, 255, 255, 255);
+            }
+    }
     //переменная добавлена, так как при нажатии лкм, обработчик успевает сработать несколько раз,
     //а этого нам точно не надо, так в таком случае, например, успевают отрисоваться другие вариации полей
     bool isMouseClicked = false;
@@ -234,7 +350,6 @@ class Game
         }
         else if (button == randomShips.GetGlobalBounds())
         {
-            gameSprites.Remove(randomShips);
             player.ResetPlayGround();
             player.GenerateShips();
         }

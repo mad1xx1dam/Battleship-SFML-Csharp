@@ -20,9 +20,11 @@ namespace Battleship
         Cell[] leftLine = new Cell[10];
         Text[] leftLineText = new Text[10];
         //само "поле битвы"
-        public Cell[,] playGround = new Cell[10, 10];
+        private Cell[,] playGround = new Cell[10, 10];
         //имя
         Text name;
+
+        public Cell[,] PlayGround { get => playGround; set => playGround = value; }
 
         public Player(float x, float y, float length, string name)
         {
@@ -67,6 +69,13 @@ namespace Battleship
             {
                 shipPositions.Add(GenerateCoordinates(size));
             }           
+        }
+
+        public void AddShip(Vector2i[] coordinates)
+        {
+            shipPositions.Add(coordinates);
+            foreach (Vector2i position in coordinates)
+                playGround[position.X, position.Y].ChangeType(CellType.Ship);
         }
 
         private Vector2i[] GenerateCoordinates(int count)
@@ -126,7 +135,7 @@ namespace Battleship
             return newCoordinates;
         }
 
-        private bool IsPositionAndDirectionAvailable(Vector2i position, Direction direction, int count)
+        public bool IsPositionAndDirectionAvailable(Vector2i position, Direction direction, int count)
         {
             int y = position.X;
             int x = position.Y;

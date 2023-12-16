@@ -9,6 +9,12 @@ namespace Battleship
         public CellType CellType { get; set; }
         Sprite cellSprite = new Sprite();
 
+        public Sprite CellSprite
+        {
+            get { return cellSprite; }
+            set { cellSprite = value; }
+        }
+
         public Cell(float x, float y, float length, CellType type)
         {
             Position = new Vector2f(x, y);
