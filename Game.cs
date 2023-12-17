@@ -15,7 +15,8 @@ class Game
     //списки кнопок/спрайтов
     Sprite[] menuSprites;
     Sprite[] settingsSprites;
-    List<Sprite> gameSprites;
+    Sprite[] preGameSprites;
+    Sprite[] gameSprites;
 
     Vector2i mousePos;
 
@@ -30,6 +31,7 @@ class Game
     static Texture returnMenuTexture = new Texture("Images/returnMenu.png");
     static Texture randomShipsTexture = new Texture("Images/randomShips.png");
     static Texture changeDirectionTexture = new Texture("Images/changeDirection.png");
+    static Texture restartTexture = new Texture("Images/restart.png");
 
     private Text textMain;
     private Text textAdvice;
@@ -45,6 +47,7 @@ class Game
     Sprite returnMenu;
     Sprite randomShips;
     Sprite changeDirection;
+    Sprite restart;
 
     //объект процесса игра
     GameProcess gameProcess;
@@ -78,19 +81,23 @@ class Game
         ok = TextSpriteCreator.SpriteCreate(okTexture, window.Size.X / 2 + hardTexture.Size.X / 1.5f, window.Size.Y / 7 * 3);
         //кнопка возврата в меню
         returnMenu = TextSpriteCreator.SpriteCreate(returnMenuTexture, window.Size.X - returnMenuTexture.Size.X / 2, window.Size.Y - returnMenuTexture.Size.Y / 2);
+        //кнопка возврата в меню
+        restart = TextSpriteCreator.SpriteCreate(restartTexture, window.Size.X - restartTexture.Size.X / 2, restartTexture.Size.Y / 2);
         //"игроки"
         float cellLength = 40;
         Vector2f playerPosition = new Vector2f(window.Size.X / 6, window.Size.Y / 3.5f);
-        gameProcess = new GameProcess(playerPosition, cellLength);
+        gameProcess = new GameProcess(playerPosition, cellLength, font);
         //кнопка генерации рандомной растановки кораблей
         randomShips = TextSpriteCreator.SpriteCreate(randomShipsTexture, playerPosition.X + cellLength * 4.5f, playerPosition.Y - cellLength * 3.5f);
         //кнопка для изменения направления корабля 
         changeDirection = TextSpriteCreator.SpriteCreate(changeDirectionTexture, window.Size.X / 2, window.Size.Y / 2);
         //для отслеживания позиций тех кнопок, которые никак не будут перемещаться
         buttonBounds = new List<FloatRect>();
+
         menuSprites = new Sprite[]  { start, settings, exit };
         settingsSprites = new Sprite[] { easy, hard, ok, returnMenu };
-        gameSprites = new List<Sprite> { returnMenu, randomShips, changeDirection };
+        preGameSprites = new Sprite[] { returnMenu, randomShips, changeDirection };
+        gameSprites = new Sprite[] { returnMenu, restart };
 
         foreach (Sprite sprite in menuSprites)
             buttonBounds.Add(sprite.GetGlobalBounds());
@@ -115,6 +122,9 @@ class Game
                     break;
                 case GameState.Menu:
                     MenuDraw();
+                    break;
+                case GameState.PreGame:
+                    PreGameDraw();
                     break;
                 case GameState.Game:
                     GameDraw();
@@ -146,13 +156,23 @@ class Game
             window.Draw(sprite);
     }
     
+    public void PreGameDraw()
+    {
+        foreach (Sprite sprite in preGameSprites)
+            window.Draw(sprite);
+        gameProcess.Draw(window);
+        if (gameProcess.ShipsSettingMouseHandler(mousePos))
+        {
+            FromPreGameToGame();
+        }
+    }
     public void GameDraw()
     {
         foreach (Sprite sprite in gameSprites)
             window.Draw(sprite);
         gameProcess.Draw(window);
-        gameProcess.ShipsSettingMouseHandler(mousePos);
     }
+
     public void SettingsDraw()
     {
         Text info = TextSpriteCreator.TextCreate("Выберите уровень сложности:".ToUpper(), font, 36, Text.Styles.Bold, window.Size.X / 2.0f, window.Size.Y / 3.5f);
@@ -160,6 +180,14 @@ class Game
 
         foreach (Sprite sprite in settingsSprites)
             window.Draw(sprite);
+    }
+
+    public void FromPreGameToGame ()
+    {
+        gameState = GameState.Game;
+        buttonBounds.Clear();
+        foreach (Sprite sprite in gameSprites)
+            buttonBounds.Add(sprite.GetGlobalBounds());
     }
 
     //переменная добавлена, так как при нажатии лкм, обработчик успевает сработать несколько раз,
@@ -194,9 +222,9 @@ class Game
         if (button == start.GetGlobalBounds())
         {
             gameProcess.BotGenerateShips();
-            gameState = GameState.Game;
+            gameState = GameState.PreGame;
             buttonBounds.Clear();
-            foreach (Sprite sprite in gameSprites)
+            foreach (Sprite sprite in preGameSprites)
                 buttonBounds.Add(sprite.GetGlobalBounds());
         }
         else if (button == settings.GetGlobalBounds())
@@ -232,12 +260,20 @@ class Game
         }
         else if (button == randomShips.GetGlobalBounds())
         {
-            gameProcess.ResetPlayGrounds();
             gameProcess.PlayerGenerateShips();
+            FromPreGameToGame();
         }
         else if (button == changeDirection.GetGlobalBounds())
         {
             gameProcess.DirectionChange();
+        }
+        else if (button == restart.GetGlobalBounds())
+        {
+            gameProcess.ResetPlayGrounds();
+            buttonBounds.Clear();
+            foreach (Sprite sprite in preGameSprites)
+                buttonBounds.Add(sprite.GetGlobalBounds());
+            gameState = GameState.PreGame;
         }
     }
 }

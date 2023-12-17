@@ -4,6 +4,7 @@
     {
         Start,
         Menu,
+        PreGame,
         Game,
         Settings,
         End

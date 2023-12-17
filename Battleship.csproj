@@ -45,6 +45,9 @@
     <None Update="Images\randomShips.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Images\restart.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Images\returnMenu.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
