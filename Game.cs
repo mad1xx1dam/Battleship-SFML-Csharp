@@ -86,7 +86,7 @@ class Game
         //"игроки"
         float cellLength = 40;
         Vector2f playerPosition = new Vector2f(window.Size.X / 6, window.Size.Y / 3.5f);
-        gameProcess = new GameProcess(playerPosition, cellLength, font);
+        gameProcess = new GameProcess(playerPosition, cellLength, font, window);
         //кнопка генерации рандомной растановки кораблей
         randomShips = TextSpriteCreator.SpriteCreate(randomShipsTexture, playerPosition.X + cellLength * 4.5f, playerPosition.Y - cellLength * 3.5f);
         //кнопка для изменения направления корабля 
@@ -160,7 +160,7 @@ class Game
     {
         foreach (Sprite sprite in preGameSprites)
             window.Draw(sprite);
-        gameProcess.Draw(window);
+        gameProcess.Draw();
         if (gameProcess.ShipsSettingMouseHandler(mousePos))
         {
             FromPreGameToGame();
@@ -170,7 +170,7 @@ class Game
     {
         foreach (Sprite sprite in gameSprites)
             window.Draw(sprite);
-        gameProcess.Draw(window);
+        gameProcess.Draw();
     }
 
     public void SettingsDraw()

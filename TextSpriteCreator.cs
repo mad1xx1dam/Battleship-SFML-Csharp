@@ -25,5 +25,13 @@ namespace Battleship
 
             return sprite;
         }
+
+        public static void ResetText (ref Text text, Vector2f newPosition, string newTitle)
+        {
+            text.DisplayedString = newTitle;
+            FloatRect textRect = text.GetLocalBounds(); //как бы устанавливает прямоугольное поле, в рамках которого находится текст
+            text.Origin = new Vector2f(textRect.Width / 2.0f, textRect.Height / 2.0f); //текст центруется относительно этого поля
+            text.Position = newPosition; 
+        }
     }
 }

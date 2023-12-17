@@ -6,6 +6,7 @@ namespace Battleship
 {
     internal class GameProcess
     {
+        RenderWindow window;
         private static Font? textFont;
         private float length;
         //список для хранения границ отрисованных клеток игрока
@@ -23,6 +24,8 @@ namespace Battleship
         int nextSize;
 
         Text advice;
+        Vector2f preGameAdvicePosition;
+        Vector2f gameAdvicePosition;
 
         public Direction Direction{ get { return direction;} set { direction = value; } }
         public FloatRect[,] PlayerCellBounds { get => playerCellBounds; set => playerCellBounds = value; }
@@ -30,8 +33,9 @@ namespace Battleship
         internal Player Player { get => player; set => player = value; }
         internal Player Bot { get => bot; set => bot = value; }
 
-        public GameProcess (Vector2f playerPosition, float cellLength, Font font)
+        public GameProcess (Vector2f playerPosition, float cellLength, Font font, RenderWindow window)
         {
+            this.window = window;
             length = cellLength;
             textFont = font;
             player = new Player(playerPosition.X, playerPosition.Y, cellLength, "Игрок");
@@ -43,8 +47,10 @@ namespace Battleship
                     botCellBounds[y, x] = bot.PlayGround[y, x].CellSprite.GetGlobalBounds();
                 }
             nextSize = 4;
+            preGameAdvicePosition = new Vector2f((Player.PlayGround[0, 0].Position.X + Player.PlayGround[0, 9].Position.X) / 2, Player.PlayGround[9, 9].Position.Y + length);
+            gameAdvicePosition = new Vector2f(window.Size.X / 2, window.Size.Y / 2);
             advice = TextSpriteCreator.TextCreate($"Расположите {nextSize}-палубный корабль", textFont,
-                    (uint)(length / 1.5f), Text.Styles.Bold, (Player.PlayGround[0, 0].Position.X + Player.PlayGround[0, 9].Position.X) / 2, Player.PlayGround[9, 9].Position.Y + length);
+                    (uint)(length / 1.5f), Text.Styles.Bold, preGameAdvicePosition.X, preGameAdvicePosition.Y);
         }
 
         private int prevX = 0; // переменная для хранения предыдущей координаты x
@@ -131,7 +137,7 @@ namespace Battleship
             else 
             {
                 ResetCellColor(prevY, prevX);
-                advice.DisplayedString = " ";
+                TextSpriteCreator.ResetText(ref advice, gameAdvicePosition, "ВАШ ХОД");
                 return true;     
             }
             return false;
@@ -141,7 +147,10 @@ namespace Battleship
 
         public void MoveCalculating()
         {
-
+            if (playerMove)
+            {
+                
+            }
         }
 
         public void ResetCellColor(int y, int x)
@@ -168,7 +177,7 @@ namespace Battleship
                 direction = Direction.Horizontal;
         }
 
-        public void Draw (RenderWindow window)
+        public void Draw ()
         {
             player.Draw(window);
             bot.Draw(window);
@@ -181,6 +190,7 @@ namespace Battleship
             bot.ResetPlayGround();
             shipsAdded = 0;
             nextSize = shipSizes[shipsAdded];
+            TextSpriteCreator.ResetText(ref advice, preGameAdvicePosition, $"Расположите {nextSize}-палубный корабль");
         }
 
         public void BotGenerateShips ()
@@ -190,8 +200,8 @@ namespace Battleship
 
         public void PlayerGenerateShips()
         {
-            advice.DisplayedString = " ";
-            player.GenerateShips();   
+            player.GenerateShips();
+            TextSpriteCreator.ResetText(ref advice, gameAdvicePosition, "ВАШ ХОД");
         }
     }
 }
