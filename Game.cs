@@ -171,6 +171,7 @@ class Game
         foreach (Sprite sprite in gameSprites)
             window.Draw(sprite);
         gameProcess.Draw();
+        gameProcess.MoveCalculating(mousePos);
     }
 
     public void SettingsDraw()

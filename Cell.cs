@@ -5,9 +5,10 @@ namespace Battleship
 {
     internal class Cell
     {
+        Sprite cellSprite = new Sprite();
+        float cellLength;
         public Vector2f Position { get; set; }
         public CellType CellType { get; set; }
-        Sprite cellSprite = new Sprite();
 
         public Sprite CellSprite
         {
@@ -17,6 +18,7 @@ namespace Battleship
 
         public Cell(float x, float y, float length, CellType type)
         {
+            cellLength = length;
             Position = new Vector2f(x, y);
             ChangeType(type); // Вызываем метод ChangeType с корректным значением cellType
           
@@ -32,13 +34,19 @@ namespace Battleship
                 switch (newCellType)
                 {
                     case CellType.Water:
-                        cellSprite.Texture = new Texture("Images/water.jpg");
+                        TextSpriteCreator.ResetSprite(ref cellSprite, new Texture("Images/water.jpg"), cellLength);
                         break;
                     case CellType.DigitOrLetter:
-                        cellSprite.Texture = new Texture("Images/letter.jpg");
+                        TextSpriteCreator.ResetSprite(ref cellSprite, new Texture("Images/letter.jpg"), cellLength);
                         break;
                     case CellType.Ship:
-                        cellSprite.Texture = new Texture("Images/ship.jpg"); // Примерный путь к изображению корабля
+                        TextSpriteCreator.ResetSprite(ref cellSprite, new Texture("Images/ship.jpg"), cellLength);
+                        break;
+                    case CellType.ShipBroken:
+                        TextSpriteCreator.ResetSprite(ref cellSprite, new Texture("Images/shipBroken.jpg"), cellLength);
+                        break;
+                    case CellType.Miss:
+                        TextSpriteCreator.ResetSprite(ref cellSprite, new Texture("Images/miss.jpg"), cellLength);
                         break;
                 }
             }

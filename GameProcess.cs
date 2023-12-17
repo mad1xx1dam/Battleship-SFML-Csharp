@@ -1,12 +1,14 @@
 ﻿using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
+using System.ComponentModel.Design;
 using System.Linq;
 
 namespace Battleship
 {
     internal class GameProcess
     {
+        Random random = new Random();
         RenderWindow window;
         private static Font? textFont;
         private float length;
@@ -149,38 +151,110 @@ namespace Battleship
             {
                 ResetCellColor(prevY, prevX);
                 bot.GenerateShips();
-                TextSpriteCreator.ResetText(ref advice, gameAdvicePosition, "ВАШ ХОД");
-                foreach (Vector2i[] pos in bot.shipPositions)
-                {
-                    foreach (Vector2i vec in pos) Console.Write(vec);
-                    Console.WriteLine();
-                }
+                ResetTextForGame();
                 return true;     
             }
             return false;
         }
 
-        bool playerMove = true;
-        int playerShipsLeft = 10;
+        public bool playerMove = true;
+        int playerShipsLeft = 0;
         int botShipsLeft = 10;
 
         public void MoveCalculating(Vector2i mousePos)
         {
-            if (playerMove)
+            if (playerShipsLeft > 0 && botShipsLeft > 0)
             {
-                for (int y = 0; y < 10; y++)
+                if (playerMove)
                 {
-                    for (int x = 0; x < 10; x++)
-                    {
-                        if (botCellBounds[y, x].Contains(mousePos.X, mousePos.Y))
-                        {
-                            if (bot.PlayGround[y, x].CellType != CellType.Miss || bot.PlayGround[y, x].CellType != CellType.ShipBroken)
-                            {
+                    ProcessPlayerTurn(mousePos);
+                }
+                else
+                {
+                    ProcessBotTurn();
+                }
+            }
+            else
+            {
+                if (playerShipsLeft > 0 ) TextSpriteCreator.ResetText(ref advice, gameAdvicePosition, "ВЫ ПОБЕДИЛИ!");
+                else TextSpriteCreator.ResetText(ref advice, gameAdvicePosition, "ПОБЕДИЛ\nКОМПЬЮТЕР :(");
+            }
+        }
 
+        private void ProcessPlayerTurn(Vector2i mousePos)
+        {
+            wasMouseButtonPressed = false;
+            bot.PlayGround[prevY, prevX].CellSprite.Color = new Color(255, 255, 255, 255);
+            for (int y = 0; y < 10; y++)
+            {
+                for (int x = 0; x < 10; x++)
+                {
+                    if (botCellBounds[y, x].Contains(mousePos.X, mousePos.Y))
+                    {
+                        if (bot.PlayGround[y, x].CellType != CellType.Miss && bot.PlayGround[y, x].CellType != CellType.ShipBroken)
+                        {
+                            bot.PlayGround[y, x].CellSprite.Color = Color.Green;
+                            if (Mouse.IsButtonPressed(Mouse.Button.Left) && !wasMouseButtonPressed)
+                            {
+                                if (bot.PlayGround[y, x].CellType == CellType.Ship)
+                                {
+                                    bot.PlayGround[y, x].ChangeType(CellType.ShipBroken);
+                                    //ищется индекс того массива, который содержит эту координату, и затем заменяется на массив размера меньше на 1
+                                    int index = bot.ShipPositions.FindIndex(arr => arr.Any(coord => coord.X == y && coord.Y == x));
+                                    var newArray = bot.ShipPositions[index].Where(coord => coord.X != y || coord.Y != x).ToArray();
+                                    bot.ShipPositions[index] = newArray;
+                                    if (newArray.Length == 0)
+                                    {
+                                        foreach (Vector2i vector in bot.ShipAroundPositions[index])
+                                            bot.PlayGround[vector.X, vector.Y].ChangeType(CellType.Miss);
+                                        botShipsLeft -= 1;
+                                        TextSpriteCreator.ResetText(ref botShipsInfo, botAdvicePosition, $"Осталось кораблей: {botShipsLeft}");
+                                    }
+                                }
+                                else
+                                {
+                                    bot.PlayGround[y, x].ChangeType(CellType.Miss);
+                                    playerMove = false;
+                                    TextSpriteCreator.ResetText(ref advice, gameAdvicePosition, "ХОД КОМПЬЮТЕРА");
+                                }
                             }
                         }
+                        prevX = x;
+                        prevY = y;
                     }
                 }
+            }
+        }
+
+        private void ProcessBotTurn()
+        {
+            bot.PlayGround[prevY, prevX].CellSprite.Color = new Color(255, 255, 255, 255);
+            int y = random.Next(0, 10);
+            int x = random.Next(0, 10);
+            while (player.PlayGround[y, x].CellType == CellType.Miss || player.PlayGround[y, x].CellType == CellType.ShipBroken)
+            {
+                y = random.Next(0, 10);
+                x = random.Next(0, 10);
+            }
+            if (player.PlayGround[y, x].CellType == CellType.Ship)
+            {
+                player.PlayGround[y, x].ChangeType(CellType.ShipBroken);
+                int index = player.ShipPositions.FindIndex(arr => arr.Any(coord => coord.X == y && coord.Y == x));
+                var newArray = player.ShipPositions[index].Where(coord => coord.X != y || coord.Y != x).ToArray();
+                player.ShipPositions[index] = newArray;
+                if (newArray.Length == 0)
+                {
+                    foreach (Vector2i vector in player.ShipAroundPositions[index])
+                        player.PlayGround[vector.X, vector.Y].ChangeType(CellType.Miss);
+                    playerShipsLeft -= 1;
+                    TextSpriteCreator.ResetText(ref playerShipsInfo, preGameAdvicePosition, $"Осталось кораблей: {playerShipsLeft}");
+                }
+            }
+            else
+            {
+                player.PlayGround[y, x].ChangeType(CellType.Miss);
+                playerMove = true;
+                TextSpriteCreator.ResetText(ref advice, gameAdvicePosition, "ВАШ ХОД");
             }
         }
 
@@ -223,6 +297,8 @@ namespace Battleship
             bot.ResetPlayGround();
             shipsAdded = 0;
             nextSize = shipSizes[shipsAdded];
+            playerShipsLeft = 10;
+            botShipsLeft = 10;
             TextSpriteCreator.ResetText(ref advice, preGameAdvicePosition, $"Расположите {nextSize}-палубный корабль");
             botShipsInfo.DisplayedString = "";
             playerShipsInfo.DisplayedString = "";
@@ -232,6 +308,11 @@ namespace Battleship
         {
             bot.GenerateShips();
             player.GenerateShips();
+            ResetTextForGame();
+        }
+
+        private void ResetTextForGame()
+        {
             TextSpriteCreator.ResetText(ref advice, gameAdvicePosition, "ВАШ ХОД");
             TextSpriteCreator.ResetText(ref playerShipsInfo, preGameAdvicePosition, $"Осталось кораблей: {playerShipsLeft}");
             TextSpriteCreator.ResetText(ref botShipsInfo, botAdvicePosition, $"Осталось кораблей: {botShipsLeft}");

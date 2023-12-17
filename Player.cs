@@ -10,7 +10,8 @@ namespace Battleship
         static string[] letters = new string[] { "А", "Б", "В", "Г", "Д", "Е", "Ж", "З", "И", "К" };
         Random random = new Random();
         //для отслеживания пока что пустых позиций
-        public List<Vector2i[]> shipPositions = new List<Vector2i[]>();
+        List<Vector2i[]> shipPositions = new List<Vector2i[]>();
+        List<Vector2i[]> shipAroundPositions = new List<Vector2i[]>();
         //для отслеживания пока что пустых позиций
         //дополнительные ряды сверху/слева для информации о "координатах"
         Cell[] upLine = new Cell[10];
@@ -23,6 +24,8 @@ namespace Battleship
         Text name;
 
         public Cell[,] PlayGround { get => playGround; set => playGround = value; }
+        public List<Vector2i[]> ShipPositions { get => shipPositions; set => shipPositions = value; }
+        public List<Vector2i[]> ShipAroundPositions { get => shipAroundPositions; set => shipAroundPositions = value; }
 
         public Player(float x, float y, float length, string name)
         {
@@ -68,7 +71,8 @@ namespace Battleship
             foreach (int size in shipSizes)
             {
                 shipPositions.Add(GenerateCoordinates(size));
-            }           
+            }
+            CalculateCellsAroundBrokenShip();
         }
 
         public void AddShip(Vector2i[] coordinates)
@@ -76,6 +80,7 @@ namespace Battleship
             shipPositions.Add(coordinates);
             foreach (Vector2i position in coordinates)
                 playGround[position.X, position.Y].ChangeType(CellType.Ship);
+            if (shipPositions.Count == 10) CalculateCellsAroundBrokenShip();
         }
 
         private Vector2i[] GenerateCoordinates(int count)
@@ -184,6 +189,53 @@ namespace Battleship
                 }
             }
             shipPositions.Clear();
+            shipAroundPositions.Clear();
+        }
+
+        //метод для вычисления координат вокруг корабля на случай, если корабль потонет
+        public void CalculateCellsAroundBrokenShip()
+        {
+            List<Vector2i> surroundingCoords = new List<Vector2i>();
+            for (int i = 0; i < shipPositions.Count(); i++)
+            {
+                surroundingCoords = new List<Vector2i>();
+                int shipLength = shipPositions[i].Length;
+                if (shipLength == 1 || (shipLength > 1 && shipPositions[i][0].Y == shipPositions[i][1].Y))
+                {
+                    int constX = shipPositions[i][0].Y; 
+                    int firstY = shipPositions[i].Select(pos => pos.X).Min() - 1 >= 0 ? shipPositions[i].Select(pos => pos.X).Min() - 1 : 0;
+                    int lastY = shipPositions[i].Select(pos => pos.X).Max() + 1 <= 9 ? shipPositions[i].Select(pos => pos.X).Max() + 1 : 9;
+
+                    for (int y = firstY; y <= lastY; y++)
+                    {
+                        for (int offsetX = -1; offsetX <= 1; offsetX++)
+                        {
+                            int newX = constX + offsetX;
+                            Vector2i coordCheck = new Vector2i(y, newX);
+                            if (newX >= 0 && newX <= 9 && !shipPositions[i].Contains(coordCheck)) // Проверить, что newY находится в пределах 0-9
+                                surroundingCoords.Add(coordCheck);
+                        }
+                    }
+                }
+                else
+                {
+                    int constY = shipPositions[i][0].X;
+                    int firstX = shipPositions[i].Select(pos => pos.Y).Min() - 1 >= 0 ? shipPositions[i].Select(pos => pos.Y).Min() - 1 : 0;
+                    int lastX = shipPositions[i].Select(pos => pos.Y).Max() + 1 <= 9 ? shipPositions[i].Select(pos => pos.Y).Max() + 1 : 9;
+
+                    for (int x = firstX; x <= lastX; x++)
+                    {
+                        for (int offsetY = -1; offsetY <= 1; offsetY++)
+                        {
+                            int newY = constY + offsetY;
+                            Vector2i coordCheck = new Vector2i(newY, x);
+                            if (newY >= 0 && newY <= 9 && !shipPositions[i].Contains(coordCheck)) // Проверить, что newY находится в пределах 0-9
+                                surroundingCoords.Add(coordCheck);
+                        }
+                    }
+                }
+                shipAroundPositions.Add(surroundingCoords.ToArray());
+            }
         }
     }
 }
