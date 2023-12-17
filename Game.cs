@@ -170,8 +170,8 @@ class Game
     {
         foreach (Sprite sprite in gameSprites)
             window.Draw(sprite);
-        gameProcess.Draw();
         gameProcess.MoveCalculating(mousePos);
+        gameProcess.Draw();
     }
 
     public void SettingsDraw()
@@ -242,11 +242,13 @@ class Game
         {
             gameMode = GameMode.Hard;
             ok.Position = new Vector2f(hard.Position.X + hard.Texture.Size.X / 1.5f, hard.Position.Y);
+            gameProcess.ChangeGameMode(gameMode);
         }
         else if (button == easy.GetGlobalBounds())
         {
             gameMode = GameMode.Easy;
             ok.Position = new Vector2f(easy.Position.X + easy.Texture.Size.X / 1.5f, easy.Position.Y);
+            gameProcess.ChangeGameMode(gameMode);
         }
         else if (button == returnMenu.GetGlobalBounds())
         {

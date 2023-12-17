@@ -1,4 +1,5 @@
 ﻿using SFML.Window;
+using System.Diagnostics;
 
 namespace Battleship
 {
@@ -8,6 +9,6 @@ namespace Battleship
         {
             Game game = new Game(1600, 800, "Морской бой", Styles.None);
             game.Run();
-        }
+        } 
     }
 }
