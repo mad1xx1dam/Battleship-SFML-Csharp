@@ -4,6 +4,8 @@
     {
         Water,
         DigitOrLetter,
-        Ship
+        Ship,
+        ShipBroken,
+        Miss,
     }
 }

@@ -221,7 +221,6 @@ class Game
     {
         if (button == start.GetGlobalBounds())
         {
-            gameProcess.BotGenerateShips();
             gameState = GameState.PreGame;
             buttonBounds.Clear();
             foreach (Sprite sprite in preGameSprites)
@@ -251,7 +250,6 @@ class Game
         else if (button == returnMenu.GetGlobalBounds())
         {
             //очистка игровых полей игрока и компьютера
-            gameProcess.ResetPlayGrounds();
             gameProcess.ResetPlayGrounds();
             gameState = GameState.Menu;
             buttonBounds.Clear();
