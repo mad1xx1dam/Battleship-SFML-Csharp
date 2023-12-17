@@ -35,13 +35,13 @@ namespace Battleship
         Text playerShipsInfo;
         Text botShipsInfo;
 
-        public Direction Direction{ get { return direction;} set { direction = value; } }
+        public Direction Direction { get { return direction; } set { direction = value; } }
         public FloatRect[,] PlayerCellBounds { get => playerCellBounds; set => playerCellBounds = value; }
         public FloatRect[,] BotCellBounds { get => botCellBounds; set => botCellBounds = value; }
         internal Player Player { get => player; set => player = value; }
         internal Player Bot { get => bot; set => bot = value; }
 
-        public GameProcess (Vector2f playerPosition, float cellLength, Font font, RenderWindow window)
+        public GameProcess(Vector2f playerPosition, float cellLength, Font font, RenderWindow window)
         {
             this.window = window;
             length = cellLength;
@@ -70,12 +70,12 @@ namespace Battleship
         private int prevX = 0; // переменная для хранения предыдущей координаты x
         private int prevY = 0; // переменная для хранения предыдущей координаты y
 
-        int shipsAdded = 0;
+        int shipsAddedOnPlayerPlayground = 0;
         bool wasMouseButtonPressed;
 
         public bool ShipsSettingMouseHandler(Vector2i mousePos)
         {
-            if (shipsAdded < 10)
+            if (shipsAddedOnPlayerPlayground < 10)
             {
                 advice.DisplayedString = $"Расположите {nextSize}-палубный корабль";
                 wasMouseButtonPressed = false;
@@ -101,8 +101,8 @@ namespace Battleship
                                         for (int i = 0; i < nextSize; i++)
                                             newCoordinates[i] = new Vector2i(y, x + i);
                                         player.AddShip(newCoordinates);
-                                        shipsAdded += 1;
-                                        if (shipsAdded != 10) nextSize = shipSizes[shipsAdded]; // Установка следующего размера корабля после добавления
+                                        shipsAddedOnPlayerPlayground += 1;
+                                        if (shipsAddedOnPlayerPlayground != 10) nextSize = shipSizes[shipsAddedOnPlayerPlayground]; // Установка следующего размера корабля после добавления
                                     }
                                     else wasMouseButtonPressed = false;
                                 }
@@ -118,8 +118,8 @@ namespace Battleship
                                         for (int i = 0; i < nextSize; i++)
                                             newCoordinates[i] = new Vector2i(y + i, x);
                                         player.AddShip(newCoordinates);
-                                        shipsAdded += 1;
-                                        if (shipsAdded != 10) nextSize = shipSizes[shipsAdded];
+                                        shipsAddedOnPlayerPlayground += 1;
+                                        if (shipsAddedOnPlayerPlayground != 10) nextSize = shipSizes[shipsAddedOnPlayerPlayground];
                                     }
                                 }
                             }
@@ -148,12 +148,12 @@ namespace Battleship
                     if (shouldBreak) break;
                 }
             }
-            else 
+            else
             {
                 ResetCellColor(prevY, prevX);
                 bot.GenerateShips();
                 ResetTextForGame();
-                return true;     
+                return true;
             }
             return false;
         }
@@ -179,8 +179,14 @@ namespace Battleship
             else
             {
                 bot.PlayGround[prevY, prevX].CellSprite.Color = new Color(255, 255, 255, 255);
-                if (playerShipsLeft > 0 ) TextSpriteCreator.ResetText(ref advice, gameAdvicePosition, "ВЫ ПОБЕДИЛИ!");
-                else TextSpriteCreator.ResetText(ref advice, gameAdvicePosition, "ПОБЕДИЛ\nКОМПЬЮТЕР :(");
+                if (playerShipsLeft > 0) TextSpriteCreator.ResetText(ref advice, gameAdvicePosition, "ВЫ ПОБЕДИЛИ!");
+                else
+                {
+                    TextSpriteCreator.ResetText(ref advice, gameAdvicePosition, "ПОБЕДИЛ\nКОМПЬЮТЕР :(");
+                    for (int i = 0; i < 10; i++)
+                        for (int j = 0; j < 10; j++)
+                            bot.PlayGround[i, j].ChangeType(bot.PlayGround[i, j].CellType);
+                }
             }
         }
 
@@ -229,23 +235,33 @@ namespace Battleship
                 }
             }
         }
+        Vector2i previousDetect = new Vector2i(-1, -1);
+        Vector2i firstDetect = new Vector2i(-1, -1);
+        Direction directionToFind = Direction.None;
         private void ProcessBotTurn()
         {
-            int y = random.Next(0, 10);
-            int x = random.Next(0, 10);
-            while (player.PlayGround[y, x].CellType == CellType.Miss || player.PlayGround[y, x].CellType == CellType.ShipBroken)
+            int y = 0;
+            int x = 0;
+            if (gameMode == GameMode.Easy)
             {
-                y = random.Next(0, 10);
-                x = random.Next(0, 10);
+                EasyModeCalculate(ref y, ref x);
+            }
+            else
+            {
+                HardModeCalculate(ref y, ref x);
             }
             if (player.PlayGround[y, x].CellType == CellType.Ship)
             {
+                previousDetect.X = y; //поменяются координаты попадания, если будет попадание
+                previousDetect.Y = x;
                 player.PlayGround[y, x].ChangeType(CellType.ShipBroken);
                 int index = player.ShipPositions.FindIndex(arr => arr.Any(coord => coord.X == y && coord.Y == x));
-                var newArray = player.ShipPositions[index].Where(coord => coord.X != y || coord.Y != x).ToArray();
+                var newArray = player.ShipPositions[index].Where(coord => !(coord.X == y && coord.Y == x)).ToArray();
                 player.ShipPositions[index] = newArray;
-                if (newArray.Length == 0)
+                if (newArray.Length == 0) //значит, что корабль был выбит
                 {
+                    previousDetect.X = -1; //чтобы искалась новая точка
+                    directionToFind = Direction.None;
                     foreach (Vector2i vector in player.ShipAroundPositions[index])
                         player.PlayGround[vector.X, vector.Y].ChangeType(CellType.Miss);
                     playerShipsLeft -= 1;
@@ -258,6 +274,94 @@ namespace Battleship
                 player.PlayGround[y, x].ChangeType(CellType.Miss);
                 TextSpriteCreator.ResetText(ref advice, gameAdvicePosition, "ВАШ ХОД");
             }
+        }
+
+        private void EasyModeCalculate(ref int y, ref int x)
+        {
+            y = random.Next(0, 10);
+            x = random.Next(0, 10);
+            while (player.PlayGround[y, x].CellType == CellType.Miss || player.PlayGround[y, x].CellType == CellType.ShipBroken)
+            {
+                y = random.Next(0, 10);
+                x = random.Next(0, 10);
+            }
+        }
+
+        int offset;
+
+        private void HardModeCalculate(ref int y, ref int x)
+        {
+            if (previousDetect.X == -1)
+            {
+                EasyModeCalculate(ref y, ref x);
+            }
+            else
+            {
+                // Логика для продолжения поиска вдоль вертикали или горизонтали
+                if (directionToFind == Direction.None)
+                {
+                    offset = random.Next(0, 2) * 2 - 1; //-1 или 1
+                    firstDetect = previousDetect;
+                    // Если направление не выбрано, случайно выбираем вертикальное или горизонтальное направление
+                    if (random.Next(0, 2) == 0)
+                    {
+                        directionToFind = Direction.Vertical; // выбрано вертикальное направление
+                    }
+                    else
+                    {
+                        directionToFind = Direction.Horizontal; // выбрано горизонтальное направление
+                    }
+                }
+                switch (directionToFind)
+                {
+                    case Direction.Vertical:
+                        if (IsCellAvailable(previousDetect.X - offset, previousDetect.Y))
+                        {
+                            y = previousDetect.X - offset;
+                            x = previousDetect.Y; // Поиск клетки вверх от предыдущей клетки
+                        }
+                        else if (IsCellAvailable(firstDetect.X + offset, firstDetect.Y))
+                        {
+                            y = firstDetect.X + offset;
+                            x = firstDetect.Y;
+                            offset *= -1; // Поиск клетки слева от временной клетки
+                        }
+                        else
+                        {
+                            directionToFind = Direction.Horizontal;
+                            offset = random.Next(0, 2) * 2 - 1; //-1 или 1
+                            goto case Direction.Horizontal;
+                        }
+                        break;
+
+                    case Direction.Horizontal:
+                        if (IsCellAvailable(previousDetect.X, previousDetect.Y - offset))
+                        {
+                            y = previousDetect.X;
+                            x = previousDetect.Y - offset; // Поиск клетки справа от предыдущей клетки
+                        }
+                        else if (IsCellAvailable(firstDetect.X, firstDetect.Y + offset))
+                        {
+                            y = firstDetect.X;
+                            x = firstDetect.Y + offset;
+                            offset *= -1; // Поиск клетки слева от временной клетки
+                        }
+                        else
+                        {
+                            offset = random.Next(0, 2) * 2 - 1;
+                            directionToFind = Direction.Vertical;
+                            goto case Direction.Vertical; // Если горизонтальное направление не продолжается, обнуляем направление
+                        }
+                        break;
+                }
+            }
+        }
+
+        private bool IsCellAvailable (int y, int x)
+        {
+            if (y >= 0 && y <= 9 && x >= 0 && x <= 9 && player.PlayGround[y, x].CellType != CellType.Miss && player.PlayGround[y, x].CellType != CellType.ShipBroken)
+                return true;
+            return false;
         }
 
         public void ResetCellColor(int y, int x)
@@ -284,7 +388,7 @@ namespace Battleship
                 direction = Direction.Horizontal;
         }
 
-        public void Draw ()
+        public void Draw()
         {
             player.Draw(window);
             bot.Draw(window);
@@ -297,8 +401,9 @@ namespace Battleship
         {
             player.ResetPlayGround();
             bot.ResetPlayGround();
-            shipsAdded = 0;
-            nextSize = shipSizes[shipsAdded];
+            shipsAddedOnPlayerPlayground = 0;
+            nextSize = shipSizes[shipsAddedOnPlayerPlayground];
+            previousDetect.X = -1;
             playerShipsLeft = 10;
             botShipsLeft = 10;
             TextSpriteCreator.ResetText(ref advice, preGameAdvicePosition, $"Расположите {nextSize}-палубный корабль");
@@ -319,7 +424,7 @@ namespace Battleship
             TextSpriteCreator.ResetText(ref playerShipsInfo, preGameAdvicePosition, $"Осталось кораблей: {playerShipsLeft}");
             TextSpriteCreator.ResetText(ref botShipsInfo, botAdvicePosition, $"Осталось кораблей: {botShipsLeft}");
         }
-        public void ChangeGameMode (GameMode gameMode)
+        public void ChangeGameMode(GameMode gameMode)
         {
             this.gameMode = gameMode;
         }
