@@ -2,24 +2,10 @@
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
-using System.Net.Http.Headers;
-using static SFML.Window.Mouse;
 
 class Game
 {
     private static Font font = new Font("Fonts/TNR.ttf");
-    RenderWindow window;
-
-    //список для хранения границ отрисованных кнопок
-    List<FloatRect> buttonBounds;
-    //списки кнопок/спрайтов
-    Sprite[] menuSprites;
-    Sprite[] settingsSprites;
-    Sprite[] preGameSprites;
-    Sprite[] gameSprites;
-
-    Vector2i mousePos;
-
     static Texture backgroundTexture = new Texture("Images/background.jpg");
     static Texture shipTexture = new Texture("Images/shipStart.png");
     static Texture startTexture = new Texture("Images/play.png");
@@ -33,8 +19,17 @@ class Game
     static Texture changeDirectionTexture = new Texture("Images/changeDirection.png");
     static Texture restartTexture = new Texture("Images/restart.png");
 
-    private Text textMain;
-    private Text textAdvice;
+    RenderWindow window;
+    GameProcess gameProcess;
+    Vector2i mousePos;
+
+    //список для хранения границ отрисованных кнопок
+    List<FloatRect> buttonBounds = new List<FloatRect>();
+    //списки кнопок/спрайтов
+    Sprite[] menuSprites;
+    Sprite[] settingsSprites;
+    Sprite[] preGameSprites;
+    Sprite[] gameSprites;
 
     Sprite background;
     Sprite ship;
@@ -49,59 +44,65 @@ class Game
     Sprite changeDirection;
     Sprite restart;
 
-    //объект процесса игра
-    GameProcess gameProcess;
+    private Text textMain;
+    private Text textAdvice;
 
     GameState gameState = GameState.Start;
     GameMode gameMode = GameMode.Easy;
 
     private float temp = -1f;
+    float cellLength = 40;
+    Vector2f playerPosition;
 
     public Game(uint width, uint height, string title, Styles style)
     {
         //настройки окна
         this.window = new RenderWindow(new VideoMode(width, height), title, style);
         window.SetVerticalSyncEnabled(true);
+        playerPosition = new Vector2f(window.Size.X / 6, window.Size.Y / 3.5f);
+        InitializeStartObjects();
+    }
 
-        //главная надпись при запуске приложения
-        textMain = TextSpriteCreator.TextCreate("Морской бой".ToUpper(), font, 80, Text.Styles.Bold, window.Size.X / 2.0f, window.Size.Y / 7.5f);
-        //надпись-подсказка при запуске приложения
-        textAdvice = TextSpriteCreator.TextCreate("Нажмите Enter, чтобы продолжить...".ToUpper(), font, 25, Text.Styles.Regular, window.Size.X / 2.0f, window.Size.Y / 3.5f);
-        //спрайт для отрисовки картинки при запуске приложения
-        ship = TextSpriteCreator.SpriteCreate(shipTexture, window.Size.X / 2, window.Size.Y / 1.45f);
-        //задний фон
-        background = TextSpriteCreator.SpriteCreate(backgroundTexture, backgroundTexture.Size.X / 2, backgroundTexture.Size.Y / 2);
-        //кнопки меню
-        start = TextSpriteCreator.SpriteCreate(startTexture, window.Size.X / 2, window.Size.Y / 4f);
-        settings = TextSpriteCreator.SpriteCreate(settingsTexture, window.Size.X / 2, window.Size.Y / 2f);
-        exit = TextSpriteCreator.SpriteCreate(exitTexture, window.Size.X / 2, window.Size.Y / 4f * 3);
-        //кнопки сложности
-        easy = TextSpriteCreator.SpriteCreate(easyTexture, window.Size.X / 2, window.Size.Y / 7 * 3);
-        hard = TextSpriteCreator.SpriteCreate(hardTexture, window.Size.X / 2, window.Size.Y / 7 * 4);
-        ok = TextSpriteCreator.SpriteCreate(okTexture, window.Size.X / 2 + hardTexture.Size.X / 1.5f, window.Size.Y / 7 * 3);
-        //кнопка возврата в меню
-        returnMenu = TextSpriteCreator.SpriteCreate(returnMenuTexture, window.Size.X - returnMenuTexture.Size.X / 2, window.Size.Y - returnMenuTexture.Size.Y / 2);
-        //кнопка возврата в меню
-        restart = TextSpriteCreator.SpriteCreate(restartTexture, window.Size.X - restartTexture.Size.X / 2, restartTexture.Size.Y / 2);
-        //"игроки"
-        float cellLength = 40;
-        Vector2f playerPosition = new Vector2f(window.Size.X / 6, window.Size.Y / 3.5f);
-        gameProcess = new GameProcess(playerPosition, cellLength, font, window);
-        //кнопка генерации рандомной растановки кораблей
-        randomShips = TextSpriteCreator.SpriteCreate(randomShipsTexture, playerPosition.X + cellLength * 4.5f, playerPosition.Y - cellLength * 3.5f);
-        //кнопка для изменения направления корабля 
-        changeDirection = TextSpriteCreator.SpriteCreate(changeDirectionTexture, window.Size.X / 2, window.Size.Y / 2);
-        //для отслеживания позиций тех кнопок, которые никак не будут перемещаться
-        buttonBounds = new List<FloatRect>();
-
-        menuSprites = new Sprite[]  { start, settings, exit };
-        settingsSprites = new Sprite[] { easy, hard, ok, returnMenu };
-        preGameSprites = new Sprite[] { returnMenu, randomShips, changeDirection };
-        gameSprites = new Sprite[] { returnMenu, restart };
-
+    private void InitializeStartObjects()
+    {
+        InitializeText();
+        InitializeSprites();
+        InitializeSpritesArrays();
+        gameProcess = new GameProcess(playerPosition, cellLength, window);
         foreach (Sprite sprite in menuSprites)
             buttonBounds.Add(sprite.GetGlobalBounds());
     }
+
+    private void InitializeText()
+    {
+        textMain = TextSpriteCreator.TextCreate("Морской бой".ToUpper(), font, 80, Text.Styles.Bold, window.Size.X / 2.0f, window.Size.Y / 7.5f);
+        textAdvice = TextSpriteCreator.TextCreate("Нажмите Enter, чтобы продолжить...".ToUpper(), font, 25, Text.Styles.Regular, window.Size.X / 2.0f, window.Size.Y / 3.5f);
+    }
+
+    private void InitializeSprites()
+    {
+        ship = TextSpriteCreator.SpriteCreate(shipTexture, window.Size.X / 2, window.Size.Y / 1.45f);
+        background = TextSpriteCreator.SpriteCreate(backgroundTexture, backgroundTexture.Size.X / 2, backgroundTexture.Size.Y / 2);
+        start = TextSpriteCreator.SpriteCreate(startTexture, window.Size.X / 2, window.Size.Y / 4f);
+        settings = TextSpriteCreator.SpriteCreate(settingsTexture, window.Size.X / 2, window.Size.Y / 2f);
+        exit = TextSpriteCreator.SpriteCreate(exitTexture, window.Size.X / 2, window.Size.Y / 4f * 3);
+        easy = TextSpriteCreator.SpriteCreate(easyTexture, window.Size.X / 2, window.Size.Y / 7 * 3);
+        hard = TextSpriteCreator.SpriteCreate(hardTexture, window.Size.X / 2, window.Size.Y / 7 * 4);
+        ok = TextSpriteCreator.SpriteCreate(okTexture, window.Size.X / 2 + hardTexture.Size.X / 1.5f, window.Size.Y / 7 * 3);
+        returnMenu = TextSpriteCreator.SpriteCreate(returnMenuTexture, window.Size.X - returnMenuTexture.Size.X / 2, window.Size.Y - returnMenuTexture.Size.Y / 2);
+        restart = TextSpriteCreator.SpriteCreate(restartTexture, window.Size.X - restartTexture.Size.X / 2, restartTexture.Size.Y / 2);
+        randomShips = TextSpriteCreator.SpriteCreate(randomShipsTexture, playerPosition.X + cellLength * 4.5f, playerPosition.Y - cellLength * 3.5f);
+        changeDirection = TextSpriteCreator.SpriteCreate(changeDirectionTexture, window.Size.X / 2, window.Size.Y / 2);
+    }
+
+    private void InitializeSpritesArrays()
+    {
+        menuSprites = new Sprite[] { start, settings, exit };
+        settingsSprites = new Sprite[] { easy, hard, ok, returnMenu };
+        preGameSprites = new Sprite[] { returnMenu, randomShips, changeDirection };
+        gameSprites = new Sprite[] { returnMenu, restart };
+    }
+
     public void Run()
     {
         while (window.IsOpen)
@@ -114,7 +115,7 @@ class Game
                 window.Close();
             mousePos = Mouse.GetPosition(window);
             HandleMouseInput();
-            
+
             switch (gameState)
             {
                 case GameState.Start:
@@ -155,7 +156,7 @@ class Game
         foreach (Sprite sprite in menuSprites)
             window.Draw(sprite);
     }
-    
+
     public void PreGameDraw()
     {
         foreach (Sprite sprite in preGameSprites)
@@ -183,7 +184,7 @@ class Game
             window.Draw(sprite);
     }
 
-    public void FromPreGameToGame ()
+    public void FromPreGameToGame()
     {
         gameState = GameState.Game;
         buttonBounds.Clear();

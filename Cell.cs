@@ -5,57 +5,62 @@ namespace Battleship
 {
     internal class Cell
     {
-        Sprite cellSprite = new Sprite();
-        float cellLength;
-        public Vector2f Position { get; set; }
-        public CellType CellType { get; set; }
+        private static Texture waterTexture = new Texture("Images/water.jpg");
+        private static Texture letterTexture = new Texture("Images/letter.jpg");
+        private static Texture shipTexture = new Texture("Images/ship.jpg");
+        private static Texture shipBrokenTexture = new Texture("Images/shipBroken.jpg");
+        private static Texture missTexture = new Texture("Images/miss.jpg");
 
-        public Sprite CellSprite
-        {
-            get { return cellSprite; }
-            set { cellSprite = value; }
-        }
+        float cellLength;
+        Sprite cellSprite = new Sprite();
+        Vector2f position;
+        CellType cellType;
+        public Vector2f Position {  get { return position; } set { position = value; } }
+        public CellType CellType { get { return cellType; } set { cellType = value; } }
+        public Sprite CellSprite { get { return cellSprite; } set { cellSprite = value; } }
 
         public Cell(float x, float y, float length, CellType type)
         {
             cellLength = length;
             Position = new Vector2f(x, y);
-            ChangeType(type); // Вызываем метод ChangeType с корректным значением cellType
-          
+            ChangeType(type); 
             cellSprite = TextSpriteCreator.SpriteCreate(cellSprite.Texture, x, y);
             cellSprite.Scale = new Vector2f(length / cellSprite.Texture.Size.X, length / cellSprite.Texture.Size.Y);
         }
-
         public void ChangeType(CellType newCellType, bool changeTexture = true)
         {
-            CellType = newCellType; // Установка нового типа клетки
+            CellType = newCellType; 
             if (changeTexture)
             {
                 switch (newCellType)
                 {
                     case CellType.Water:
-                        TextSpriteCreator.ResetSprite(ref cellSprite, new Texture("Images/water.jpg"), cellLength);
+                        ResetSprite(waterTexture);
                         break;
                     case CellType.DigitOrLetter:
-                        TextSpriteCreator.ResetSprite(ref cellSprite, new Texture("Images/letter.jpg"), cellLength);
+                        ResetSprite(letterTexture);
                         break;
                     case CellType.Ship:
-                        TextSpriteCreator.ResetSprite(ref cellSprite, new Texture("Images/ship.jpg"), cellLength);
+                        ResetSprite(shipTexture);
                         break;
                     case CellType.ShipBroken:
-                        TextSpriteCreator.ResetSprite(ref cellSprite, new Texture("Images/shipBroken.jpg"), cellLength);
+                        ResetSprite(shipBrokenTexture);
                         break;
                     case CellType.Miss:
-                        TextSpriteCreator.ResetSprite(ref cellSprite, new Texture("Images/miss.jpg"), cellLength);
+                        ResetSprite(missTexture);
                         break;
                 }
             }
         }
-
+        private void ResetSprite(Texture texture)
+        {
+            cellSprite.Texture = texture;
+            cellSprite.Scale = new Vector2f(cellLength / texture.Size.X, cellLength / texture.Size.Y);
+            cellSprite.Origin = new Vector2f(texture.Size.X / 2.0f, texture.Size.Y / 2.0f);
+        }
         public void Draw(RenderWindow window)
         {
             window.Draw(cellSprite);
         }
-
     }
 }
