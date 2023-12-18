@@ -269,7 +269,6 @@ namespace Battleship
                 TextSpriteCreator.ResetText(ref advice, gameAdvicePosition, "ВАШ ХОД");
             }
         }
-
         private void EasyModeCalculate(ref int y, ref int x)
         {
             y = random.Next(0, gridSize);
@@ -280,9 +279,7 @@ namespace Battleship
                 x = random.Next(0, gridSize);
             }
         }
-
         int offset;
-
         private void HardModeCalculate(ref int y, ref int x)
         {
             if (previousDetect.X == -1)

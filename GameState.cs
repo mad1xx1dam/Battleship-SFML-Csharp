@@ -7,6 +7,5 @@
         PreGame,
         Game,
         Settings,
-        End
     }
 }

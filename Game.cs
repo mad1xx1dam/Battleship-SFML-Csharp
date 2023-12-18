@@ -23,9 +23,7 @@ class Game
     GameProcess gameProcess;
     Vector2i mousePos;
 
-    //список для хранения границ отрисованных кнопок
     List<FloatRect> buttonBounds = new List<FloatRect>();
-    //списки кнопок/спрайтов
     Sprite[] menuSprites;
     Sprite[] settingsSprites;
     Sprite[] preGameSprites;
@@ -56,13 +54,11 @@ class Game
 
     public Game(uint width, uint height, string title, Styles style)
     {
-        //настройки окна
-        this.window = new RenderWindow(new VideoMode(width, height), title, style);
+        window = new RenderWindow(new VideoMode(width, height), title, style);
         window.SetVerticalSyncEnabled(true);
         playerPosition = new Vector2f(window.Size.X / 6, window.Size.Y / 3.5f);
         InitializeStartObjects();
     }
-
     private void InitializeStartObjects()
     {
         InitializeText();
@@ -72,13 +68,11 @@ class Game
         foreach (Sprite sprite in menuSprites)
             buttonBounds.Add(sprite.GetGlobalBounds());
     }
-
     private void InitializeText()
     {
         textMain = TextSpriteCreator.TextCreate("Морской бой".ToUpper(), font, 80, Text.Styles.Bold, window.Size.X / 2.0f, window.Size.Y / 7.5f);
         textAdvice = TextSpriteCreator.TextCreate("Нажмите Enter, чтобы продолжить...".ToUpper(), font, 25, Text.Styles.Regular, window.Size.X / 2.0f, window.Size.Y / 3.5f);
     }
-
     private void InitializeSprites()
     {
         ship = TextSpriteCreator.SpriteCreate(shipTexture, window.Size.X / 2, window.Size.Y / 1.45f);
@@ -94,7 +88,6 @@ class Game
         randomShips = TextSpriteCreator.SpriteCreate(randomShipsTexture, playerPosition.X + cellLength * 4.5f, playerPosition.Y - cellLength * 3.5f);
         changeDirection = TextSpriteCreator.SpriteCreate(changeDirectionTexture, window.Size.X / 2, window.Size.Y / 2);
     }
-
     private void InitializeSpritesArrays()
     {
         menuSprites = new Sprite[] { start, settings, exit };
@@ -102,7 +95,6 @@ class Game
         preGameSprites = new Sprite[] { returnMenu, randomShips, changeDirection };
         gameSprites = new Sprite[] { returnMenu, restart };
     }
-
     public void Run()
     {
         while (window.IsOpen)
@@ -137,7 +129,6 @@ class Game
             window.Display();
         }
     }
-
     public void StartDraw()
     {
         temp += 0.007f;
@@ -150,13 +141,11 @@ class Game
 
         if (Keyboard.IsKeyPressed(Keyboard.Key.Enter)) gameState = GameState.Menu;
     }
-
     public void MenuDraw()
     {
         foreach (Sprite sprite in menuSprites)
             window.Draw(sprite);
     }
-
     public void PreGameDraw()
     {
         foreach (Sprite sprite in preGameSprites)
@@ -174,7 +163,6 @@ class Game
         gameProcess.MoveCalculating(mousePos);
         gameProcess.Draw();
     }
-
     public void SettingsDraw()
     {
         Text info = TextSpriteCreator.TextCreate("Выберите уровень сложности:".ToUpper(), font, 36, Text.Styles.Bold, window.Size.X / 2.0f, window.Size.Y / 3.5f);
@@ -183,7 +171,6 @@ class Game
         foreach (Sprite sprite in settingsSprites)
             window.Draw(sprite);
     }
-
     public void FromPreGameToGame()
     {
         gameState = GameState.Game;
@@ -191,18 +178,14 @@ class Game
         foreach (Sprite sprite in gameSprites)
             buttonBounds.Add(sprite.GetGlobalBounds());
     }
-
-    //переменная добавлена, так как при нажатии лкм, обработчик успевает сработать несколько раз,
-    //а этого нам точно не надо, так в таком случае, например, успевают отрисоваться другие вариации полей
     bool isMouseClicked = false;
-    //вызывается каждый кадр
     public void HandleMouseInput()
     {
         if (Mouse.IsButtonPressed(Mouse.Button.Left))
         {
-            if (!isMouseClicked) // проверка наличия предыдущего нажатия
+            if (!isMouseClicked) 
             {
-                isMouseClicked = true; // установка флага нажатия
+                isMouseClicked = true; 
                 foreach (var button in buttonBounds)
                 {
                     if (button.Contains(mousePos.X, mousePos.Y))
@@ -215,10 +198,9 @@ class Game
         }
         else
         {
-            isMouseClicked = false; // сброс флага нажатия
+            isMouseClicked = false; 
         }
     }
-
     private void HandleButtonClick(FloatRect button)
     {
         if (button == start.GetGlobalBounds())
@@ -253,7 +235,6 @@ class Game
         }
         else if (button == returnMenu.GetGlobalBounds())
         {
-            //очистка игровых полей игрока и компьютера
             gameProcess.ResetPlayGrounds();
             gameState = GameState.Menu;
             buttonBounds.Clear();
